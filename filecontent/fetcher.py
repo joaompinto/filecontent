@@ -24,7 +24,7 @@ class Fetcher:
         fileobj = self._handler.get_fileobj()
 
         self._content_analyzer = ContentAnalyzer(
-            self._urlparse.path, fileobj, self._metadata["type"]
+            self._url, fileobj, self._metadata["type"]
         )
 
         return self._content_analyzer.get_content()

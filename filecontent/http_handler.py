@@ -8,6 +8,7 @@ class HTTPHandler:
 
     def get_metadata(self):
         response = requests.head(self._url, allow_redirects=True)
+        response.raise_for_status()
         metadata = {
             "type": response.headers["content-type"],
             "date": response.headers["date"],
@@ -17,6 +18,7 @@ class HTTPHandler:
 
     def get_fileobj(self):
         response = requests.get(self._url, stream=True, allow_redirects=True)
+        response.raise_for_status()
         if response.headers.get("content-encoding") == "gzip":
             return GzipFile(fileobj=response.raw)
         else:
