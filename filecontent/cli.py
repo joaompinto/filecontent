@@ -1,7 +1,7 @@
 import sys
-from json import dumps
 from optparse import OptionParser
 from .fetcher import Fetcher
+from pprint import pprint
 
 
 def parse_cmd_line():
@@ -18,5 +18,7 @@ def main():
     url = args[0]
     print("Getting content summary")
     fetcher = Fetcher(url)
-    summary = fetcher.get_summary()
-    print(dumps(summary, indent=2))
+    summary = fetcher.get_content()
+
+    pprint(summary)
+    # print(dumps(summary, indent=2))
