@@ -21,7 +21,6 @@ class ContentAnalyzer:
 
     def get_matching_extractor(self):
         for importer, modname, ispkg in pkgutil.iter_modules(extractors.__path__):
-            print("Found submodule %s (is a package: %s)" % (modname, ispkg))
             module = import_module(f"filecontent.extractors.{modname}", ".")
             extractor_cls = module.Extractor
             if extractor_cls.match(self._filename, self._type_hint):
