@@ -4,6 +4,7 @@ from hashlib import sha512
 import pkgutil
 from importlib import import_module
 from filecontent import extractors
+from collections import OrderedDict
 
 
 class ContentAnalyzer:
@@ -41,19 +42,16 @@ class ContentAnalyzer:
 
     def get_content(self):
         """ Return content summary """
-        print("get content for", self._filename)
-
         part_read = partial(self._fileobj.read, 1024 * 1024)
         iterator = iter(part_read, b"")
 
-        print(self._fileobj)
         for index, block in enumerate(iterator, start=1):
             self.feed(block)
             if len(block) == 0:
                 break
         self._fileobj.close()
 
-        content = {}
+        content = OrderedDict()
         content["name"] = self._filename[len(self._hide_path) :]
         content["size"] = self._size
         content["sha512"] = self._sha512.hexdigest()
