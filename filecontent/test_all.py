@@ -4,5 +4,3 @@ from filecontent import __version__
 
 def test_something():
     assert __version__
-
-
