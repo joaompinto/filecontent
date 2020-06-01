@@ -9,6 +9,7 @@ class FileHandler:
     def get_metadata(self):
         filename = self._url
         metadata = {
+            "url": filename,
             "type": guess_type(filename),
             "size": getsize(filename),
             "date": int(getmtime(filename)),
