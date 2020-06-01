@@ -9,10 +9,12 @@ class HTTPHandler:
     def get_metadata(self):
         response = requests.head(self._url, allow_redirects=True)
         response.raise_for_status()
+        self._url = response.url  # It maybe different as a result of a redirect
         metadata = {
             "type": response.headers["content-type"],
-            "date": response.headers["date"],
             "size": int(response.headers.get("content-length", "0")),
+            "date": response.headers["date"],
+            "etag": response.headers.get("ETag", ""),
         }
         return metadata
 

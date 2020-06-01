@@ -16,15 +16,16 @@ class Fetcher:
     def get_metadata(self):
         """ get the file metadata """
         self._handler = SCHEME_HANDLER[self._scheme](self._url)
-        self._metadata = self._handler.get_metadata()
-        return self._metadata
+        metadata = self._handler.get_metadata()
+        # handlers can change url e.g redirect
+        self._url = self._handler._url
+        return metadata
 
     def get_content(self):
-        self.get_metadata()
+        metadata = self.get_metadata()
         fileobj = self._handler.get_fileobj()
 
-        self._content_analyzer = ContentAnalyzer(
-            self._url, fileobj, self._metadata["type"]
-        )
+        content_analyzer = ContentAnalyzer(self._url, fileobj, metadata["type"])
+        metadata.update(content_analyzer.get_content())
 
-        return self._content_analyzer.get_content()
+        return metadata
