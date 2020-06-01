@@ -4,14 +4,14 @@ from hashlib import sha512
 import pkgutil
 from importlib import import_module
 from filecontent import extractors
-from collections import OrderedDict
 
 
 class ContentAnalyzer:
     def __init__(
-        self, filename: str, fileobj: object, type_hint: str = "", hide_path: str = ""
+        self, metadata: dict, fileobj: object, type_hint: str = "", hide_path: str = ""
     ):
-        self._filename = filename
+        self._metadata = metadata
+        self._filename = metadata["url"]
         self._fileobj = fileobj
         self._type_hint = type_hint
         self._tmp_file = None
@@ -41,7 +41,9 @@ class ContentAnalyzer:
         self._size += len(content)
 
     def get_content(self):
-        """ Return content summary """
+        """ Get content summary """
+        metatdata = self._metadata
+
         part_read = partial(self._fileobj.read, 1024 * 1024)
         iterator = iter(part_read, b"")
 
@@ -51,13 +53,12 @@ class ContentAnalyzer:
                 break
         self._fileobj.close()
 
-        content = OrderedDict()
-        content["name"] = self._filename[len(self._hide_path) :]
-        content["size"] = self._size
-        content["sha512"] = self._sha512.hexdigest()
+        metatdata["url"] = self._filename[len(self._hide_path) :]
+        metatdata["size"] = self._size
+        metatdata["sha512"] = self._sha512.hexdigest()
 
         if self._extractor:
-            content["files"] = self._extractor.get_content()
+            metatdata["files"] = self._extractor.get_content()
         if self._tmp_file:
             self._tmp_file.close()
-        return content
+        return metatdata

@@ -1,5 +1,6 @@
 import requests
 from gzip import GzipFile
+from email.utils import parsedate_to_datetime
 
 
 class HTTPHandler:
@@ -10,10 +11,13 @@ class HTTPHandler:
         response = requests.head(self._url, allow_redirects=True)
         response.raise_for_status()
         self._url = response.url  # It maybe different as a result of a redirect
+        http_date = parsedate_to_datetime(response.headers["date"])
+        unix_ts = int(http_date.strftime("%s"))
         metadata = {
+            "url": self._url,
             "type": response.headers["content-type"],
             "size": int(response.headers.get("content-length", "0")),
-            "date": response.headers["date"],
+            "date": unix_ts,
             "etag": response.headers.get("ETag", ""),
         }
         return metadata

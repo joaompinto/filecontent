@@ -1,9 +1,10 @@
 from urllib.parse import urlparse
-from .http_handler import HTTPHandler
+from .handlers.http import HTTPHandler
+from .handlers.file import FileHandler
 from .content import ContentAnalyzer
 
 
-SCHEME_HANDLER = {"http": HTTPHandler, "https": HTTPHandler}
+SCHEME_HANDLER = {"": FileHandler, "http": HTTPHandler, "https": HTTPHandler}
 
 
 class Fetcher:
@@ -18,14 +19,13 @@ class Fetcher:
         self._handler = SCHEME_HANDLER[self._scheme](self._url)
         metadata = self._handler.get_metadata()
         # handlers can change url e.g redirect
-        self._url = self._handler._url
         return metadata
 
     def get_content(self):
         metadata = self.get_metadata()
         fileobj = self._handler.get_fileobj()
 
-        content_analyzer = ContentAnalyzer(self._url, fileobj, metadata["type"])
-        metadata.update(content_analyzer.get_content())
+        content_analyzer = ContentAnalyzer(metadata, fileobj, metadata["type"])
+        metadata = content_analyzer.get_content()
 
         return metadata

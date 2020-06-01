@@ -2,6 +2,7 @@ import os
 from zipfile import ZipFile
 from tempfile import TemporaryDirectory
 from pathlib import Path
+from time import mktime
 from ..content import ContentAnalyzer
 
 
@@ -28,9 +29,11 @@ class Extractor:
                     continue
                 with TemporaryDirectory() as tmp_dir:
                     extracted_fname = zip_file.extract(member_info, tmp_dir)
+                    date_time = int(mktime(member_info.date_time + (0, 0, -1)))
+                    metadata = {"url": extracted_fname, "date": date_time}
                     with open(extracted_fname, "rb") as extracted_file:
                         file_content = ContentAnalyzer(
-                            extracted_fname, extracted_file, hide_path=tmp_dir + os.sep
+                            metadata, extracted_file, hide_path=tmp_dir + os.sep
                         )
                         files.append(file_content.get_content())
 
