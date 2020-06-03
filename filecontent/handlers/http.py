@@ -1,6 +1,7 @@
 import requests
 from gzip import GzipFile
 from email.utils import parsedate_to_datetime
+from ..mime import guess_type
 
 
 class HTTPHandler:
@@ -13,13 +14,16 @@ class HTTPHandler:
         self._url = response.url  # It maybe different as a result of a redirect
         http_date = parsedate_to_datetime(response.headers["date"])
         unix_ts = int(http_date.strftime("%s"))
+        # type_hint = response.headers["content-type"]
+
         metadata = {
             "url": self._url,
-            "type": response.headers["content-type"],
             "size": int(response.headers.get("content-length", "0")),
             "date": unix_ts,
             "etag": response.headers.get("ETag", ""),
         }
+        guess_type(metadata)
+
         return metadata
 
     def get_fileobj(self):

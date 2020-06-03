@@ -25,7 +25,7 @@ class Fetcher:
         metadata = self.get_metadata()
         fileobj = self._handler.get_fileobj()
 
-        content_analyzer = ContentAnalyzer(metadata, fileobj, metadata["type"])
+        content_analyzer = ContentAnalyzer(metadata, fileobj)
         metadata = content_analyzer.get_content()
 
         return metadata

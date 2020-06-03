@@ -1,64 +1,48 @@
-from tempfile import NamedTemporaryFile
 from functools import partial
 from hashlib import sha512
-import pkgutil
-from importlib import import_module
-from filecontent import extractors
+from .sha512 import SHA512File
+from .extractor import ExtractorManager
+from .mime import guess_type
+
+READ_CHUNK_SIZE = 1024 * 1024
 
 
 class ContentAnalyzer:
-    def __init__(
-        self, metadata: dict, fileobj: object, type_hint: str = "", hide_path: str = ""
-    ):
+    def __init__(self, metadata: dict, fileobj: object, hide_path: str = ""):
+        guess_type(metadata)
         self._metadata = metadata
         self._filename = metadata["url"]
-        self._fileobj = fileobj
-        self._type_hint = type_hint
+        self._fileobj = SHA512File(fileobj)
         self._tmp_file = None
-        self._size = 0
         self._sha512 = sha512()
         self._hide_path = hide_path
-        self._extractor = self.get_matching_extractor()
+        self._extractor_manager = ExtractorManager(metadata, fileobj)
 
-    def get_matching_extractor(self):
-        for importer, modname, ispkg in pkgutil.iter_modules(extractors.__path__):
-            module = import_module(f"filecontent.extractors.{modname}", ".")
-            extractor_cls = module.Extractor
-            if extractor_cls.match(self._filename, self._type_hint):
-                init_parm = self._filename
-                # If the filename is remote but the extract needs a file
-                # then we must download it to a temporary file
-                if ":" in self._filename and extractor_cls.needs_file:
-                    self._tmp_file = NamedTemporaryFile()
-                    init_parm = self._tmp_file.name
-                return extractor_cls(init_parm)
-        return None
+    def _read_file_chunks(self):
+        """ Read from fileobj fat READ_CHUNK_SIZE chunks """
 
-    def feed(self, content):
-        self._sha512.update(content)
-        if self._tmp_file:
-            self._tmp_file.write(content)
-        self._size += len(content)
+        part_read = partial(self._fileobj.read, READ_CHUNK_SIZE)
+        iterator = iter(part_read, b"")
+        for index, content in enumerate(iterator, start=1):
+            if self._extractor_manager.tmp_file:
+                self._extractor_manager.tmp_file.write(content)
+            if len(content) == 0:
+                break
 
     def get_content(self):
         """ Get content summary """
-        metatdata = self._metadata
 
-        part_read = partial(self._fileobj.read, 1024 * 1024)
-        iterator = iter(part_read, b"")
+        # Read file at chunks to calculate sha512 sum
+        self._read_file_chunks()
 
-        for index, block in enumerate(iterator, start=1):
-            self.feed(block)
-            if len(block) == 0:
-                break
+        metadata = self._metadata
+        metadata["url"] = self._filename[len(self._hide_path) :]
+        metadata["size"] = self._fileobj.size()
+        metadata["sha512"] = self._fileobj.sha512()
+
+        self._extractor_manager.get_content(metadata)
+
         self._fileobj.close()
-
-        metatdata["url"] = self._filename[len(self._hide_path) :]
-        metatdata["size"] = self._size
-        metatdata["sha512"] = self._sha512.hexdigest()
-
-        if self._extractor:
-            metatdata["files"] = self._extractor.get_content()
-        if self._tmp_file:
-            self._tmp_file.close()
-        return metatdata
+        if self._extractor_manager.tmp_file:
+            self._extractor_manager.tmp_file.close()
+        return metadata

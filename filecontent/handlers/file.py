@@ -1,5 +1,5 @@
-from mimetypes import guess_type
 from os.path import getsize, getmtime
+from ..mime import guess_type
 
 
 class FileHandler:
@@ -7,13 +7,12 @@ class FileHandler:
         self._url = url
 
     def get_metadata(self):
-        filename = self._url
         metadata = {
-            "url": filename,
-            "type": guess_type(filename),
-            "size": getsize(filename),
-            "date": int(getmtime(filename)),
+            "url": self._url,
+            "size": getsize(self._url),
+            "date": int(getmtime(self._url)),
         }
+        guess_type(metadata)
         return metadata
 
     def get_fileobj(self):

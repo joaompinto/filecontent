@@ -1,7 +1,6 @@
 import os
 from zipfile import ZipFile
 from tempfile import TemporaryDirectory
-from pathlib import Path
 from time import mktime
 from ..content import ContentAnalyzer
 
@@ -9,16 +8,10 @@ from ..content import ContentAnalyzer
 class Extractor:
 
     needs_file = True
+    match_content = "/zip"
 
-    @staticmethod
-    def match(filename, type_hint):
-        path = Path(filename)
-        if "/zip" in type_hint or path.suffix == ".zip":
-            return True
-        return False
-
-    def __init__(self, filename):
-        self._filename = filename
+    def __init__(self, metadata, fileobj):
+        self._filename = metadata["url"]
 
     def get_content(self):
 
